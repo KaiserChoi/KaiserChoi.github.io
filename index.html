@@ -23,10 +23,7 @@
   </head>
   <body> 
     <div id='lg'>
-      <img :src="imageURL" class="mainLogo"> 
-      <a :href="link" >百度一下</a>
-      <button v-for= "(m, index) in movies" :class="{active: index===currentIndex}" @click='clickMovie(index)'>{{index}}-{{m}}</li>
- 
+      <img src="src/weChatPay.PNG" class="payCode">
     </div>
   
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12" ></script>
@@ -34,15 +31,9 @@
       var lg = new Vue({
         el: '#lg',
         data: {
-          imageURL: "/src/common/handWriteLogo.png",
-          link: "https://www.baidu.com/",
-          movies: ["火影忍者", "海贼王", "名侦探柯南"],
-          currentIndex: false
+          imageURL: "src/handWriteLogo.png",
         },
         methods:{
-          clickMovie: function(index) {
-            return this.currentIndex = index
-          }
         }
       })
     </script>
