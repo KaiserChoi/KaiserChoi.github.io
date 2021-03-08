@@ -1,8 +1,51 @@
 <html>
   <head>
-    <title>Hand Write</title>
+    <title>Title</title>
+    <style>
+      #lg {
+        text-align: center;
+      }
+      .active {
+        color: red;
+      }
+      .mainLogo {
+        margin: -1;
+        width: 256px;
+        height: 175px;
+        position: relative;
+        text-align: center;
+      }
+      .a {
+          position: relative;
+          text-align: center;
+      }
+    </style>
   </head>
-  <body>
+  <body> 
+    <div id='lg'>
+      <img :src="imageURL" class="mainLogo"> 
+      <a :href="link" >百度一下</a>
+      <button v-for= "(m, index) in movies" :class="{active: index===currentIndex}" @click='clickMovie(index)'>{{index}}-{{m}}</li>
+ 
+    </div>
+  
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12" ></script>
+    <script>
+      var lg = new Vue({
+        el: '#lg',
+        data: {
+          imageURL: "https://github.com/KaiserChoi/websites/blob/main/src/common/handWriteLogo.png",
+          link: "https://www.baidu.com/",
+          movies: ["火影忍者", "海贼王", "名侦探柯南"],
+          currentIndex: false
+        },
+        methods:{
+          clickMovie: function(index) {
+            return this.currentIndex = index
+          }
+        }
+      })
+    </script>
+  
   </body>
 </html>
