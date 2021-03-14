@@ -1,0 +1,66 @@
+<html lang="en">
+<meta charset="UTF-8">
+<link rel="stylesheet" href="css/practice.css" type="text/css">
+<body>
+<canvas class="writing-area" id="aa"  width="900" height="300">
+</canvas>
+
+<button  onclick="clearCanvas()" class="pen" id="cc" style="width: 32px; height: 32px"></button>
+
+<script type="text/javascript">
+    let wriArea = document.getElementById("aa");
+    let ctx = wriArea.getContext('2d');
+    let penColor = "#00000";
+    // ctx.fillStyle="#f123f2";
+    // ctx.fillRect(0, 0, 900, 300);
+    // ctx.font = '46px serif';
+    // ctx.textBaseline = "hanging"
+
+    let mouseClick = false;
+    let mouseX = 0;
+    let mouseY =0;
+    document.getElementById("aa").addEventListener("mousemove", drawing, true);
+    document.getElementById("aa").addEventListener("mousedown", mouseDown, false);
+    document.getElementById("aa").addEventListener("mouseup", mouseUp, false);
+
+    function mouseUp(){
+        mouseClick = false;
+    }
+    function mouseDown(event){
+        mouseX = event.pageX;
+        mouseY = event.pageY;
+        mouseClick = true;
+    }
+
+    function clearCanvas(){
+        ctx.clearRect(0, 0, 900, 300);
+    }
+
+    // avail width Height 1536 824
+    // screen width Height 1536 864
+    function drawing(event) {
+        let stopX = event.pageX;
+        let stopY = event.pageY;
+        console.log("mouseX: " + mouseX, stopX);
+        // console.log("mouseY: " + mouseY, stopY);
+        console.log("event X:" + event.screenX)
+        // console.log(window.screen.width, window.screen.height)
+        if (mouseClick){
+            ctx.strokeStyle = '#000f00';
+            ctx.beginPath();
+            ctx.moveTo(mouseX, mouseY)
+            ctx.lineTo(stopX,stopY);
+
+            ctx.lineWidth = 1;
+            ctx.lineHeight = 1;
+            ctx.stroke();
+            mouseX = stopX;
+            mouseY = stopY;
+        }
+        else{
+            return 0;
+        }
+    }
+</script>
+</body>
+</html>
