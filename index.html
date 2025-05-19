@@ -1,96 +1,200 @@
 <!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Hand Write</title>
-    <link rel="stylesheet" href="./src/assets/css/top.css" type="text/css">
-    <link rel="stylesheet" href="./src/assets/css/hand-write-area.css" type="text/css">
-    <link rel="import" href="./src/assets/practice.html" onload="toPractice()">
+<title>我的菜谱</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  /* ==== CSS 样式部分 ==== */
+  body {
+    font-family: sans-serif;
+    line-height: 1.6;
+    margin: 15px;
+    background-color: #f8f8f8;
+  }
+  h1, h2, h3 {
+      color: #333;
+  }
+  .recipe-item {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    cursor: pointer; /* 指示这是一个可点击的元素 */
+    box-shadow: 2px 2px 5px #eee;
+    transition: box-shadow 0.3s ease;
+  }
+  .recipe-item:hover {
+      box-shadow: 2px 2px 10px #ddd;
+  }
+  .recipe-name {
+      font-size: 1.2em;
+      margin: 0;
+      color: #0056b3; /* 菜品名称颜色 */
+  }
+  .recipe-details {
+    margin-top: 15px;
+    border-top: 1px dashed #ccc;
+    padding-top: 15px;
+    display: none; /* 默认隐藏详情 */
+  }
+  .recipe-details h3 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      color: #555;
+  }
+  .recipe-details ul, .recipe-details ol {
+      margin-top: 5px;
+      padding-left: 20px;
+  }
+  .recipe-details ul li, .recipe-details ol li {
+      margin-bottom: 5px;
+  }
+</style>
 </head>
 <body>
-  <div class="tab-bar">
-      <div class="wrapper-top" role="banner">
-          <div class="Logo-bar">
-              <a class="wrapper-link" href="App.html">
-                  <div class="image-area">
-                      <img src="./src/common/handWriteLogo.png" style="width: 32px; height: 32px">
-                  </div>
-                  <div class="text-area">
-                      <span>Hand Write</span>
-                  </div>
-              </a>
-          </div>
-          <div class="home">
-              <a class="wrapper-link" href="App.html">
-                  <div class="image-area">
-                      <img src="src/common/home.png" style="width: 32px; height: 32px">
-                  </div>
-                  <div class="text-area">
-                      <span>Home</span>
-                  </div>
-              </a>
-          </div>
-          <div class="study">
-              <a class="wrapper-link" href="App.html">
-                  <div  class="image-area">
-                      <img src="src/common/study.png" style="width: 32px; height: 32px">
-                  </div>
-                  <div class="text-area">
-                      <span>Study</span>
-                  </div>
-              </a>
-          </div>
-          <div class="practice">
-              <a class="wrapper-link" href="./src/assets/practice.html">
-                  <div class="image-area">
-                      <img src="src/common/writing.png" style="width: 40px; height: 40px">
-                  </div>
-                  <div class="text-area">
-                      <span>Practice</span>
-                  </div>
-              </a>
-          </div>
-          <div class="setting">
-              <a class="wrapper-link" href="App.html">
-                  <div class="image-area">
-                      <img src="./src/common/setting.png" style="width: 32px; height: 32px">
-                  </div>
-                  <div class="text-area">
-                      <span>setting</span>
-                  </div>
-              </a>
-          </div>
-      </div>
+
+<h1>我的美味菜谱</h1>
+
+<div id="recipe-list">
   </div>
-  <div class="main">
-      <IFRAME NAME="write-area" src="./src/assets/practice.html" id="index"></iframe>
-  </div>
-<!--      <canvas class="writing-area" id="aa">-->
-<!--      </canvas>-->
-<!--      <div class="image-area">-->
-<!--          <img src="./src/common/pen.png" style="width: 32px; height: 32px; padding-top: 100px">-->
-<!--      </div>-->
-<!--      <button onclick="drawing()" class="pen" > pen </button>-->
 
+<script>
+  /* ==== JavaScript 部分 ==== */
 
-<!--  hand writing area code-->
-
-  <script type="text/javascript">
-      // let wriArea = document.getElementById("aa")
-      // let ctx=wriArea.getContext("2d");
-
-    // wriArea.addEventListener("mouseup", drawing, false);
-    // wriArea.addEventListener("mousemove", drawing, true);
-    // wriArea.addEventListener("mousedown", drawing, true);
-    function indexPage(){
-        let praId = document.getElementById("index");
-        praId.src = "./src/assets/practice.html";
-        // let praLink = changeArea.target
-        // console.log(praLink)
-        // let changeContent = praLink.import.querySelector('section');
-        // changeContent.insertAdjacentHTML("afterbegin", praLink);
+  // ==== 菜谱数据 ====
+  // 将您的所有菜谱数据以JavaScript数组的形式直接放在这里
+  const recipesData = [
+    {
+      "菜品名称": "宫保鸡丁",
+      "配料": [
+        "鸡胸肉1块",
+        "黄瓜1根",
+        "胡萝卜1根",
+        "油炸花生米少许",
+        "葱",
+        "蒜",
+        "葱段",
+        "干辣椒",
+        "花椒粒",
+        "豆瓣酱1勺",
+        "胡椒粉少许",
+        "生抽 (腌制用1勺, 调料用2勺+少许)",
+        "黄酒1勺 (腌制用)",
+        "蛋清1个 (腌制用)",
+        "淀粉 (腌制用1勺, 调料用1勺)",
+        "蚝油1勺 (调料用)",
+        "白糖1勺 (调料用)",
+        "清水半碗 (调料用)"
+      ],
+      "步骤": [
+        "1. 鸡胸肉切丁，放少许胡椒粉，1勺生抽，1勺黄酒，1个蛋清，1勺淀粉，抓拌均匀，封油腌制15分钟。",
+        "2. 调料汁：2勺生抽，1勺蚝油，少许生抽，1勺白糖，1勺淀粉，半碗清水，搅拌均匀。",
+        "3. 下入腌制好的鸡肉滑炒至断生，捞出备用。",
+        "4. 油热放入花椒粒小火爆香，捞出。",
+        "5. 放入葱，蒜，干辣椒，一勺豆瓣酱，炒香炒出红油，再放入红萝卜丁炒至断生，再放入鸡肉，黄瓜丁，葱段，翻炒上色，倒入调好的料汁，收汁到浓稠，下花生米翻炒均匀，最后出锅。"
+      ]
+    },
+    {
+      "菜品名称": "雪梨汤",
+      "配料": [
+        "雪梨1个",
+        "冰糖适量",
+        "红枣几颗",
+        "枸杞少许"
+      ],
+      "步骤": [
+        "1. 雪梨洗净，去核，切块。",
+        "2. 将雪梨、冰糖、红枣、枸杞一同放入炖盅或砂锅中。",
+        "3. 加入足量清水，没过所有食材。",
+        "4. 盖上盖子，隔水炖煮（或直接小火慢炖）约1小时，至雪梨软烂，汤汁变甜即可。",
+        "5. 温热食用，也可放凉后食用。"
+      ]
     }
+    // 您可以在这里继续添加其他菜品的JSON对象，每个对象之间用逗号分隔
+    /*
+    ,{
+        "菜品名称": "新的菜品名称",
+        "配料": [
+            "配料1",
+            "配料2"
+        ],
+        "步骤": [
+            "步骤1",
+            "步骤2"
+        ]
+    }
+    */
+  ];
 
-  </script>
+  // ==== 显示菜谱的逻辑 ====
+  const recipeListDiv = document.getElementById('recipe-list');
+
+  recipesData.forEach(recipe => {
+    // 创建一个div用于包裹单个菜品
+    const itemDiv = document.createElement('div');
+    itemDiv.classList.add('recipe-item');
+
+    // 创建菜品名称标题
+    const nameHeading = document.createElement('h2');
+    nameHeading.classList.add('recipe-name');
+    nameHeading.textContent = recipe.菜品名称;
+    itemDiv.appendChild(nameHeading);
+
+    // 创建详情区域div
+    const detailsDiv = document.createElement('div');
+    detailsDiv.classList.add('recipe-details'); // 默认是隐藏的
+
+    // 添加配料部分
+    const ingredientsHeading = document.createElement('h3');
+    ingredientsHeading.textContent = '配料:';
+    detailsDiv.appendChild(ingredientsHeading);
+
+    const ingredientsList = document.createElement('ul'); // 无序列表
+    recipe.配料.forEach(ingredient => {
+      const li = document.createElement('li');
+      li.textContent = ingredient;
+      ingredientsList.appendChild(li);
+    });
+    detailsDiv.appendChild(ingredientsList);
+
+    // 添加步骤部分
+    const stepsHeading = document.createElement('h3');
+    stepsHeading.textContent = '步骤:';
+    detailsDiv.appendChild(stepsHeading);
+
+    const stepsList = document.createElement('ol'); // 有序列表显示步骤
+    recipe.步骤.forEach(step => {
+      const li = document.createElement('li');
+      li.textContent = step;
+      stepsList.appendChild(li);
+    });
+    detailsDiv.appendChild(stepsList);
+
+    // 将详情区域添加到菜品包裹div中
+    itemDiv.appendChild(detailsDiv);
+
+    // 将整个菜品div添加到页面列表区域
+    recipeListDiv.appendChild(itemDiv);
+
+    // ==== 添加点击事件 ====
+    // 点击菜品名称时，显示/隐藏详情区域
+    nameHeading.addEventListener('click', () => {
+      // 隐藏所有其他菜品的详情
+      document.querySelectorAll('.recipe-details').forEach(detail => {
+          // 确保只隐藏不属于当前点击的详情区域
+          if (detail !== detailsDiv && detail.style.display !== 'none') {
+              detail.style.display = 'none';
+          }
+      });
+
+      // 切换当前点击的详情区域的显示状态 (如果隐藏就显示，如果显示就隐藏)
+      detailsDiv.style.display = detailsDiv.style.display === 'none' ? 'block' : 'none';
+    });
+  });
+
+</script>
+
 </body>
 </html>
