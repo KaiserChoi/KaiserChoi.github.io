@@ -3,119 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Welding Point Cloud Visualizer</title>
+    <title>魔法画笔 - 绘画创造音乐与艺术</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header class="hero-section">
             <div class="hero-content">
-                <h1 class="main-title">焊接点云可视化器</h1>
-                <h2 class="subtitle">Interactive Welding Point Cloud Visualizer</h2>
-                <p class="description">探索三维焊接数据的创新可视化体验</p>
-                <button class="cta-button" onclick="startVisualization()">开始体验</button>
+                <h1 class="main-title">🎨 魔法画笔</h1>
+                <h2 class="subtitle">Draw • Sound • Create</h2>
+                <p class="description">用画笔创造音乐，让艺术发出声音</p>
+                <button class="cta-button" onclick="startDrawing()">开始创作</button>
             </div>
             <div class="floating-particles"></div>
         </header>
 
         <main class="main-content">
-            <section class="controls-panel">
-                <h3>可视化控制面板</h3>
-                <div class="control-group">
-                    <label for="pointSize">点云大小:</label>
-                    <input type="range" id="pointSize" min="1" max="10" value="3">
-                    <span id="pointSizeValue">3</span>
+            <!-- 画布区域 -->
+            <section class="canvas-area">
+                <div class="canvas-container">
+                    <canvas id="drawingCanvas" width="800" height="600"></canvas>
+                    <div class="canvas-overlay">
+                        <div class="speed-indicator">
+                            <div class="speed-bar">
+                                <div class="speed-fill" id="speedBar"></div>
+                            </div>
+                            <span id="speedText">绘画速度</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="control-group">
-                    <label for="colorMode">颜色模式:</label>
-                    <select id="colorMode">
-                        <option value="temperature">温度</option>
-                        <option value="depth">深度</option>
-                        <option value="quality">质量</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <button class="control-btn" onclick="generateRandomData()">生成随机数据</button>
-                    <button class="control-btn" onclick="resetVisualization()">重置视图</button>
-                    <button class="control-btn" onclick="exportData()">导出数据</button>
+                
+                <!-- 控制面板 -->
+                <div class="drawing-controls">
+                    <div class="brush-controls">
+                        <h4>画笔设置</h4>
+                        <div class="control-row">
+                            <label>画笔大小:</label>
+                            <input type="range" id="brushSize" min="2" max="50" value="5">
+                            <span id="brushSizeValue">5px</span>
+                        </div>
+                        <div class="control-row">
+                            <label>画笔颜色:</label>
+                            <input type="color" id="brushColor" value="#ff6b6b">
+                        </div>
+                        <div class="control-row">
+                            <button class="tool-btn active" data-tool="brush">🖌️ 画笔</button>
+                            <button class="tool-btn" data-tool="eraser">🧹 橡皮</button>
+                            <button class="tool-btn" data-tool="clear" onclick="clearCanvas()">🗑️ 清空</button>
+                        </div>
+                    </div>
+                    
+                    <div class="sound-controls">
+                        <h4>音效设置</h4>
+                        <div class="control-row">
+                            <label>音效类型:</label>
+                            <select id="soundMode">
+                                <option value="piano">钢琴</option>
+                                <option value="nature">自然</option>
+                                <option value="chinese">中文词汇</option>
+                                <option value="instrument">乐器</option>
+                            </select>
+                        </div>
+                        <div class="control-row">
+                            <label>音量:</label>
+                            <input type="range" id="volume" min="0" max="100" value="70">
+                            <span id="volumeValue">70%</span>
+                        </div>
+                        <div class="control-row">
+                            <button class="control-btn" id="muteBtn" onclick="toggleMute()">🔊 静音</button>
+                            <button class="control-btn" onclick="testSound()">🎵 试听</button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            <section class="visualization-area">
-                <div id="pointCloud" class="point-cloud-container">
-                    <div class="loading-spinner">
-                        <div class="spinner"></div>
-                        <p>正在加载点云数据...</p>
+            <!-- 实时反馈区域 -->
+            <section class="feedback-area">
+                <div class="shape-detection">
+                    <h4>形状识别</h4>
+                    <div class="detected-shape">
+                        <div class="shape-icon" id="shapeIcon">❓</div>
+                        <div class="shape-info">
+                            <span class="shape-name" id="shapeName">开始绘画...</span>
+                            <span class="shape-confidence" id="shapeConfidence">--</span>
+                        </div>
                     </div>
                 </div>
-                <div class="info-panel">
-                    <h4>数据信息</h4>
-                    <div class="stats">
+
+                <div class="voice-feedback">
+                    <h4>语音反馈</h4>
+                    <div class="voice-status">
+                        <div class="voice-wave" id="voiceWave"></div>
+                        <div class="voice-text" id="voiceText">等待绘画输入...</div>
+                    </div>
+                </div>
+
+                <div class="drawing-stats">
+                    <h4>绘画统计</h4>
+                    <div class="stats-grid">
                         <div class="stat-item">
-                            <span class="stat-label">点数:</span>
-                            <span class="stat-value" id="pointCount">0</span>
+                            <span class="stat-label">绘画时间:</span>
+                            <span class="stat-value" id="drawingTime">0s</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">温度范围:</span>
-                            <span class="stat-value" id="tempRange">--</span>
+                            <span class="stat-label">笔触数:</span>
+                            <span class="stat-value" id="strokeCount">0</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">质量评分:</span>
-                            <span class="stat-value" id="qualityScore">--</span>
+                            <span class="stat-label">平均速度:</span>
+                            <span class="stat-value" id="avgSpeed">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">创作得分:</span>
+                            <span class="stat-value" id="creativeScore">0</span>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🔬</div>
-                    <h4>精密分析</h4>
-                    <p>高精度点云数据分析，支持微米级别的焊接质量检测</p>
+            <!-- 作品展示区域 -->
+            <section class="gallery-section">
+                <h3>🎨 创作画廊</h3>
+                <div class="artwork-gallery" id="artworkGallery">
+                    <div class="artwork-placeholder">
+                        <p>你的作品将在这里展示</p>
+                        <p>开始绘画来创建第一幅作品！</p>
+                    </div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🎨</div>
-                    <h4>多模式可视化</h4>
-                    <p>支持温度、深度、质量等多种颜色编码模式</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
-                    <h4>实时交互</h4>
-                    <p>流畅的实时数据更新和交互式3D操作体验</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h4>数据导出</h4>
-                    <p>支持多种格式的数据导出，便于后续分析处理</p>
+                <div class="gallery-controls">
+                    <button class="control-btn" onclick="saveArtwork()">💾 保存作品</button>
+                    <button class="control-btn" onclick="shareArtwork()">📤 分享作品</button>
+                    <button class="control-btn" onclick="downloadArtwork()">⬇️ 下载图片</button>
                 </div>
             </section>
 
-            <section class="demo-gallery">
-                <h3>展示画廊</h3>
-                <div class="gallery-grid">
-                    <div class="gallery-item" onclick="loadDemo('weld1')">
-                        <div class="gallery-preview">
-                            <div class="mock-chart chart-1"></div>
-                        </div>
-                        <p>焊缝质量分析</p>
+            <!-- 互动游戏区域 -->
+            <section class="games-section">
+                <h3>🎮 创意挑战</h3>
+                <div class="games-grid">
+                    <div class="game-card" onclick="startChallenge('speed')">
+                        <div class="game-icon">⚡</div>
+                        <h4>速度绘画</h4>
+                        <p>在限定时间内完成指定图形</p>
                     </div>
-                    <div class="gallery-item" onclick="loadDemo('weld2')">
-                        <div class="gallery-preview">
-                            <div class="mock-chart chart-2"></div>
-                        </div>
-                        <p>温度分布图</p>
+                    <div class="game-card" onclick="startChallenge('sound')">
+                        <div class="game-icon">🎵</div>
+                        <h4>音乐绘画</h4>
+                        <p>根据音乐节拍进行创作</p>
                     </div>
-                    <div class="gallery-item" onclick="loadDemo('weld3')">
-                        <div class="gallery-preview">
-                            <div class="mock-chart chart-3"></div>
-                        </div>
-                        <p>深度轮廓图</p>
+                    <div class="game-card" onclick="startChallenge('shape')">
+                        <div class="game-icon">🔺</div>
+                        <h4>形状大师</h4>
+                        <p>绘制指定形状获得高分</p>
                     </div>
-                    <div class="gallery-item" onclick="loadDemo('weld4')">
-                        <div class="gallery-preview">
-                            <div class="mock-chart chart-4"></div>
-                        </div>
-                        <p>缺陷检测图</p>
+                    <div class="game-card" onclick="startChallenge('story')">
+                        <div class="game-icon">📚</div>
+                        <h4>故事绘画</h4>
+                        <p>通过绘画讲述一个故事</p>
                     </div>
                 </div>
             </section>
@@ -123,10 +167,10 @@
 
         <footer class="footer">
             <div class="footer-content">
-                <p>&copy; 2024 焊接点云可视化器 - 基于现代Web技术构建</p>
+                <p>&copy; 2024 魔法画笔 - 让创意发出声音</p>
                 <div class="social-links">
                     <a href="#" class="social-link">GitHub</a>
-                    <a href="#" class="social-link">文档</a>
+                    <a href="#" class="social-link">分享</a>
                     <a href="#" class="social-link">反馈</a>
                 </div>
             </div>
