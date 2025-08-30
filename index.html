@@ -137,6 +137,107 @@
                 </div>
             </section>
 
+            <!-- 钢琴键盘区域 -->
+            <section class="piano-section">
+                <h3>🎹 虚拟钢琴</h3>
+                <div class="piano-container">
+                    <div class="piano-keyboard" id="pianoKeyboard">
+                        <!-- 白键 -->
+                        <div class="white-key" data-note="C4" data-freq="261.63">
+                            <span class="key-label">C</span>
+                        </div>
+                        <div class="white-key" data-note="D4" data-freq="293.66">
+                            <span class="key-label">D</span>
+                        </div>
+                        <div class="white-key" data-note="E4" data-freq="329.63">
+                            <span class="key-label">E</span>
+                        </div>
+                        <div class="white-key" data-note="F4" data-freq="349.23">
+                            <span class="key-label">F</span>
+                        </div>
+                        <div class="white-key" data-note="G4" data-freq="392.00">
+                            <span class="key-label">G</span>
+                        </div>
+                        <div class="white-key" data-note="A4" data-freq="440.00">
+                            <span class="key-label">A</span>
+                        </div>
+                        <div class="white-key" data-note="B4" data-freq="493.88">
+                            <span class="key-label">B</span>
+                        </div>
+                        <div class="white-key" data-note="C5" data-freq="523.25">
+                            <span class="key-label">C</span>
+                        </div>
+                        <div class="white-key" data-note="D5" data-freq="587.33">
+                            <span class="key-label">D</span>
+                        </div>
+                        <div class="white-key" data-note="E5" data-freq="659.25">
+                            <span class="key-label">E</span>
+                        </div>
+                        <div class="white-key" data-note="F5" data-freq="698.46">
+                            <span class="key-label">F</span>
+                        </div>
+                        <div class="white-key" data-note="G5" data-freq="783.99">
+                            <span class="key-label">G</span>
+                        </div>
+                        
+                        <!-- 黑键 -->
+                        <div class="black-key" data-note="C#4" data-freq="277.18" style="left: 35px;">
+                            <span class="key-label">C#</span>
+                        </div>
+                        <div class="black-key" data-note="D#4" data-freq="311.13" style="left: 95px;">
+                            <span class="key-label">D#</span>
+                        </div>
+                        <div class="black-key" data-note="F#4" data-freq="369.99" style="left: 215px;">
+                            <span class="key-label">F#</span>
+                        </div>
+                        <div class="black-key" data-note="G#4" data-freq="415.30" style="left: 275px;">
+                            <span class="key-label">G#</span>
+                        </div>
+                        <div class="black-key" data-note="A#4" data-freq="466.16" style="left: 335px;">
+                            <span class="key-label">A#</span>
+                        </div>
+                        <div class="black-key" data-note="C#5" data-freq="554.37" style="left: 455px;">
+                            <span class="key-label">C#</span>
+                        </div>
+                        <div class="black-key" data-note="D#5" data-freq="622.25" style="left: 515px;">
+                            <span class="key-label">D#</span>
+                        </div>
+                        <div class="black-key" data-note="F#5" data-freq="739.99" style="left: 635px;">
+                            <span class="key-label">F#</span>
+                        </div>
+                    </div>
+                    
+                    <div class="piano-controls">
+                        <div class="piano-control-group">
+                            <h4>钢琴控制</h4>
+                            <div class="control-row">
+                                <button class="control-btn" onclick="playChopinMelody()">🎼 播放萧邦小夜曲</button>
+                                <button class="control-btn" onclick="stopAutoPlay()">⏹️ 停止演奏</button>
+                                <button class="control-btn" onclick="togglePianoMode()">🎨 绘画钢琴模式</button>
+                            </div>
+                            <div class="control-row">
+                                <label>钢琴音量:</label>
+                                <input type="range" id="pianoVolume" min="0" max="100" value="80">
+                                <span id="pianoVolumeValue">80%</span>
+                            </div>
+                            <div class="control-row">
+                                <label>演奏速度:</label>
+                                <input type="range" id="playbackSpeed" min="0.5" max="2" step="0.1" value="1">
+                                <span id="speedValue">1.0x</span>
+                            </div>
+                        </div>
+                        
+                        <div class="now-playing">
+                            <h4>正在演奏</h4>
+                            <div class="current-note">
+                                <div class="note-display" id="currentNote">等待演奏...</div>
+                                <div class="note-animation" id="noteAnimation"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- 互动游戏区域 -->
             <section class="games-section">
                 <h3>🎮 创意挑战</h3>
@@ -151,10 +252,10 @@
                         <h4>音乐绘画</h4>
                         <p>根据音乐节拍进行创作</p>
                     </div>
-                    <div class="game-card" onclick="startChallenge('shape')">
-                        <div class="game-icon">🔺</div>
-                        <h4>形状大师</h4>
-                        <p>绘制指定形状获得高分</p>
+                    <div class="game-card" onclick="startChallenge('piano')">
+                        <div class="game-icon">🎹</div>
+                        <h4>钢琴绘画</h4>
+                        <p>用绘画控制钢琴演奏</p>
                     </div>
                     <div class="game-card" onclick="startChallenge('story')">
                         <div class="game-icon">📚</div>
