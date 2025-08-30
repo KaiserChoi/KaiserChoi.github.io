@@ -38,6 +38,48 @@ class MagicBrush {
         this.audioContext = null;
         this.masterGain = null;
         
+        // 钢琴相关
+        this.pianoVolume = 0.8;
+        this.playbackSpeed = 1.0;
+        this.isAutoPlaying = false;
+        this.autoPlayTimeout = null;
+        this.currentNoteIndex = 0;
+        this.isPianoMode = false;
+        
+        // 萧邦小夜曲片段 (简化版) - 音符和节拍
+        this.chopinMelody = [
+            { note: 'E4', duration: 500 },
+            { note: 'D#4', duration: 250 },
+            { note: 'E4', duration: 250 },
+            { note: 'D#4', duration: 250 },
+            { note: 'E4', duration: 250 },
+            { note: 'B4', duration: 500 },
+            { note: 'D5', duration: 500 },
+            { note: 'C5', duration: 500 },
+            { note: 'A4', duration: 750 },
+            { note: '', duration: 250 }, // 休止符
+            { note: 'C4', duration: 250 },
+            { note: 'E4', duration: 250 },
+            { note: 'A4', duration: 250 },
+            { note: 'B4', duration: 750 },
+            { note: '', duration: 250 },
+            { note: 'E4', duration: 250 },
+            { note: 'G#4', duration: 250 },
+            { note: 'B4', duration: 250 },
+            { note: 'C5', duration: 750 },
+            { note: '', duration: 250 },
+            { note: 'E4', duration: 250 },
+            { note: 'E4', duration: 250 },
+            { note: 'D#4', duration: 250 },
+            { note: 'E4', duration: 250 },
+            { note: 'D#4', duration: 250 },
+            { note: 'E4', duration: 250 },
+            { note: 'B4', duration: 500 },
+            { note: 'D5', duration: 500 },
+            { note: 'C5', duration: 500 },
+            { note: 'A4', duration: 1000 }
+        ];
+        
         this.initializeApp();
     }
 
@@ -45,6 +87,7 @@ class MagicBrush {
         this.setupCanvas();
         this.setupEventListeners();
         this.setupAudio();
+        this.setupPiano();
         this.updateStats();
         
         // 初始化语音合成
@@ -148,6 +191,21 @@ class MagicBrush {
                 this.masterGain.gain.value = this.volume;
             }
         });
+
+        // 钢琴控制事件
+        const pianoVolume = document.getElementById('pianoVolume');
+        const pianoVolumeValue = document.getElementById('pianoVolumeValue');
+        pianoVolume.addEventListener('input', (e) => {
+            this.pianoVolume = parseInt(e.target.value) / 100;
+            pianoVolumeValue.textContent = e.target.value + '%';
+        });
+
+        const playbackSpeed = document.getElementById('playbackSpeed');
+        const speedValue = document.getElementById('speedValue');
+        playbackSpeed.addEventListener('input', (e) => {
+            this.playbackSpeed = parseFloat(e.target.value);
+            speedValue.textContent = e.target.value + 'x';
+        });
     }
 
     async setupAudio() {
@@ -159,6 +217,309 @@ class MagicBrush {
         } catch (error) {
             console.warn('音频上下文初始化失败:', error);
         }
+    }
+
+    setupPiano() {
+        // 设置钢琴键盘事件监听
+        const pianoKeys = document.querySelectorAll('.white-key, .black-key');
+        console.log(`找到 ${pianoKeys.length} 个钢琴键`);
+        
+        pianoKeys.forEach((key, index) => {
+            // 鼠标事件
+            key.addEventListener('mousedown', (e) => {
+                console.log(`点击钢琴键: ${e.target.dataset.note}`);
+                this.playPianoNote(e.target);
+            });
+            
+            // 触屏事件
+            key.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                console.log(`触摸钢琴键: ${e.target.dataset.note}`);
+                this.playPianoNote(e.target);
+            });
+            
+            // 点击事件作为备用
+            key.addEventListener('click', (e) => {
+                console.log(`点击事件钢琴键: ${e.target.dataset.note}`);
+                this.playPianoNote(e.target);
+            });
+            
+            // 释放事件
+            key.addEventListener('mouseup', (e) => this.releasePianoKey(e.target));
+            key.addEventListener('mouseleave', (e) => this.releasePianoKey(e.target));
+            key.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.releasePianoKey(e.target);
+            });
+            
+            // 确保键盘有数据属性
+            if (!key.dataset.note) {
+                console.warn(`钢琴键 ${index} 缺少 data-note 属性`);
+            }
+            if (!key.dataset.freq) {
+                console.warn(`钢琴键 ${index} 缺少 data-freq 属性`);
+            }
+        });
+
+        // 添加键盘快捷键支持
+        document.addEventListener('keydown', (e) => this.handlePianoKeyboard(e, true));
+        document.addEventListener('keyup', (e) => this.handlePianoKeyboard(e, false));
+        
+        console.log('钢琴设置完成');
+    }
+
+    handlePianoKeyboard(event, isPressed) {
+        // 键盘映射到钢琴键
+        const keyMap = {
+            'KeyA': 'C4', 'KeyW': 'C#4', 'KeyS': 'D4', 'KeyE': 'D#4', 'KeyD': 'E4',
+            'KeyF': 'F4', 'KeyT': 'F#4', 'KeyG': 'G4', 'KeyY': 'G#4', 'KeyH': 'A4',
+            'KeyU': 'A#4', 'KeyJ': 'B4', 'KeyK': 'C5', 'KeyO': 'C#5', 'KeyL': 'D5',
+            'KeyP': 'D#5', 'Semicolon': 'E5', 'Quote': 'F5', 'BracketRight': 'F#5'
+        };
+
+        const note = keyMap[event.code];
+        if (!note) return;
+
+        event.preventDefault();
+        const key = document.querySelector(`[data-note="${note}"]`);
+        if (!key) return;
+
+        if (isPressed && !key.classList.contains('active')) {
+            this.playPianoNote(key);
+        } else if (!isPressed) {
+            this.releasePianoKey(key);
+        }
+    }
+
+    playPianoNote(keyElement) {
+        if (!keyElement) return;
+
+        const note = keyElement.dataset.note;
+        const frequency = parseFloat(keyElement.dataset.freq);
+        
+        // 确保音频上下文已激活
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+        
+        // 添加视觉反馈
+        keyElement.classList.add('active');
+        
+        // 播放钢琴音符
+        this.createPianoSound(frequency, note);
+        
+        // 更新正在演奏显示
+        this.updateNowPlaying(note);
+        
+        // 添加可爱的视觉弹跳效果
+        this.addKeyBounceEffect(keyElement);
+        
+        // 显示音符名称通知
+        this.showNoteNotification(note);
+    }
+    
+    addKeyBounceEffect(keyElement) {
+        // 给按键添加可爱的弹跳动画
+        keyElement.style.transform = 'translateY(4px) scale(0.98)';
+        keyElement.style.transition = 'all 0.1s ease';
+        
+        setTimeout(() => {
+            keyElement.style.transform = 'translateY(0) scale(1)';
+        }, 100);
+    }
+    
+    showNoteNotification(note) {
+        // 显示可爱的音符提示
+        const noteNames = {
+            'C4': 'Do', 'C#4': 'Do#', 'D4': 'Re', 'D#4': 'Re#', 'E4': 'Mi',
+            'F4': 'Fa', 'F#4': 'Fa#', 'G4': 'Sol', 'G#4': 'Sol#', 'A4': 'La',
+            'A#4': 'La#', 'B4': 'Si', 'C5': 'Do', 'C#5': 'Do#', 'D5': 'Re',
+            'D#5': 'Re#', 'E5': 'Mi', 'F5': 'Fa', 'F#5': 'Fa#', 'G5': 'Sol'
+        };
+        
+        const noteName = noteNames[note] || note;
+        
+        // 创建可爱的音符气泡
+        const bubble = document.createElement('div');
+        bubble.textContent = `♪ ${noteName} ♪`;
+        bubble.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 18px;
+            z-index: 10000;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            animation: noteFloat 1s ease-out forwards;
+        `;
+        
+        document.body.appendChild(bubble);
+        
+        setTimeout(() => {
+            bubble.style.opacity = '1';
+            bubble.style.transform = 'translate(-50%, -70px) scale(1.1)';
+        }, 50);
+        
+        setTimeout(() => {
+            bubble.style.opacity = '0';
+            bubble.style.transform = 'translate(-50%, -100px) scale(0.8)';
+            setTimeout(() => {
+                if (document.body.contains(bubble)) {
+                    document.body.removeChild(bubble);
+                }
+            }, 300);
+        }, 800);
+    }
+
+    releasePianoKey(keyElement) {
+        keyElement.classList.remove('active');
+    }
+
+    createPianoSound(frequency, noteName) {
+        if (!this.audioContext) return;
+
+        try {
+            // 创建可爱的钢琴音色
+            const oscillators = [];
+            const gainNodes = [];
+            
+            // 主音（正弦波，柔和基础音）
+            const mainOsc = this.audioContext.createOscillator();
+            const mainGain = this.audioContext.createGain();
+            const mainFilter = this.audioContext.createBiquadFilter();
+            
+            mainOsc.type = 'sine';
+            mainOsc.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+            mainFilter.type = 'lowpass';
+            mainFilter.frequency.setValueAtTime(3000, this.audioContext.currentTime);
+            mainFilter.Q.setValueAtTime(1, this.audioContext.currentTime);
+            
+            // 可爱的音包效果
+            mainGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+            mainGain.gain.linearRampToValueAtTime(this.pianoVolume * 0.7, this.audioContext.currentTime + 0.02);
+            mainGain.gain.exponentialRampToValueAtTime(this.pianoVolume * 0.3, this.audioContext.currentTime + 0.3);
+            mainGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1.2);
+            
+            mainOsc.connect(mainFilter);
+            mainFilter.connect(mainGain);
+            mainGain.connect(this.masterGain);
+            
+            // 添加可爱的谐波（三角波）
+            const harmOsc = this.audioContext.createOscillator();
+            const harmGain = this.audioContext.createGain();
+            
+            harmOsc.type = 'triangle';
+            harmOsc.frequency.setValueAtTime(frequency * 2, this.audioContext.currentTime);
+            
+            harmGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+            harmGain.gain.linearRampToValueAtTime(this.pianoVolume * 0.25, this.audioContext.currentTime + 0.01);
+            harmGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.8);
+            
+            harmOsc.connect(harmGain);
+            harmGain.connect(this.masterGain);
+            
+            // 添加温暖的低频（让声音更饱满可爱）
+            const subOsc = this.audioContext.createOscillator();
+            const subGain = this.audioContext.createGain();
+            
+            subOsc.type = 'sine';
+            subOsc.frequency.setValueAtTime(frequency * 0.5, this.audioContext.currentTime);
+            
+            subGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+            subGain.gain.linearRampToValueAtTime(this.pianoVolume * 0.15, this.audioContext.currentTime + 0.05);
+            subGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1.0);
+            
+            subOsc.connect(subGain);
+            subGain.connect(this.masterGain);
+            
+            // 添加可爱的"叮"声效果
+            const bellOsc = this.audioContext.createOscillator();
+            const bellGain = this.audioContext.createGain();
+            const bellFilter = this.audioContext.createBiquadFilter();
+            
+            bellOsc.type = 'sine';
+            bellOsc.frequency.setValueAtTime(frequency * 4, this.audioContext.currentTime);
+            bellFilter.type = 'highpass';
+            bellFilter.frequency.setValueAtTime(1000, this.audioContext.currentTime);
+            
+            bellGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+            bellGain.gain.linearRampToValueAtTime(this.pianoVolume * 0.3, this.audioContext.currentTime + 0.005);
+            bellGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.2);
+            
+            bellOsc.connect(bellFilter);
+            bellFilter.connect(bellGain);
+            bellGain.connect(this.masterGain);
+            
+            // 启动所有振荡器
+            const startTime = this.audioContext.currentTime;
+            const stopTime = startTime + 1.5;
+            
+            mainOsc.start(startTime);
+            mainOsc.stop(stopTime);
+            
+            harmOsc.start(startTime);
+            harmOsc.stop(stopTime);
+            
+            subOsc.start(startTime);
+            subOsc.stop(stopTime);
+            
+            bellOsc.start(startTime);
+            bellOsc.stop(startTime + 0.3);
+            
+            // 添加可爱的音符弹跳效果
+            this.addCuteNoteEffect(frequency);
+            
+        } catch (error) {
+            console.warn('钢琴音频播放失败:', error);
+        }
+    }
+    
+    addCuteNoteEffect(frequency) {
+        // 创建一个短暂的"pop"声效果，让音符听起来更可爱
+        try {
+            const popOsc = this.audioContext.createOscillator();
+            const popGain = this.audioContext.createGain();
+            const popFilter = this.audioContext.createBiquadFilter();
+            
+            popOsc.type = 'square';
+            popOsc.frequency.setValueAtTime(frequency * 8, this.audioContext.currentTime);
+            popFilter.type = 'bandpass';
+            popFilter.frequency.setValueAtTime(frequency * 6, this.audioContext.currentTime);
+            popFilter.Q.setValueAtTime(10, this.audioContext.currentTime);
+            
+            popGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+            popGain.gain.linearRampToValueAtTime(this.pianoVolume * 0.1, this.audioContext.currentTime + 0.001);
+            popGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.05);
+            
+            popOsc.connect(popFilter);
+            popFilter.connect(popGain);
+            popGain.connect(this.masterGain);
+            
+            popOsc.start(this.audioContext.currentTime);
+            popOsc.stop(this.audioContext.currentTime + 0.08);
+        } catch (error) {
+            // 忽略pop效果的错误
+        }
+    }
+
+    updateNowPlaying(note) {
+        const currentNoteDisplay = document.getElementById('currentNote');
+        const noteAnimation = document.getElementById('noteAnimation');
+        
+        currentNoteDisplay.textContent = note || '等待演奏...';
+        noteAnimation.classList.add('active');
+        
+        setTimeout(() => {
+            noteAnimation.classList.remove('active');
+        }, 500);
     }
 
     setupVoices() {
@@ -241,7 +602,11 @@ class MagicBrush {
             this.updateSpeedIndicator(speed);
             
             // 根据速度播放不同音效
-            this.playDrawingSound('draw', pos, speed);
+            if (this.isPianoMode) {
+                this.playPianoFromDrawing(pos, speed);
+            } else {
+                this.playDrawingSound('draw', pos, speed);
+            }
         }
         
         // 绘制
@@ -259,6 +624,34 @@ class MagicBrush {
         
         this.lastPosition = pos;
         this.lastDrawTime = Date.now();
+    }
+
+    playPianoFromDrawing(pos, speed) {
+        // 根据绘画位置和速度映射到钢琴音符
+        const notes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5', 'G5'];
+        const noteIndex = Math.floor((pos.x / this.canvas.width) * notes.length);
+        const note = notes[Math.max(0, Math.min(noteIndex, notes.length - 1))];
+        
+        // 根据Y位置调整音高
+        const yFactor = 1 - (pos.y / this.canvas.height);
+        const baseFreqs = {
+            'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23,
+            'G4': 392.00, 'A4': 440.00, 'B4': 493.88, 'C5': 523.25,
+            'D5': 587.33, 'E5': 659.25, 'F5': 698.46, 'G5': 783.99
+        };
+        
+        const frequency = baseFreqs[note] * (0.8 + yFactor * 0.4);
+        
+        // 高亮对应的钢琴键
+        const keyElement = document.querySelector(`[data-note="${note}"]`);
+        if (keyElement) {
+            keyElement.classList.add('active');
+            setTimeout(() => keyElement.classList.remove('active'), 200);
+        }
+        
+        // 播放音符
+        this.createPianoSound(frequency, note);
+        this.updateNowPlaying(note);
     }
 
     stopDrawing() {
@@ -604,6 +997,68 @@ class MagicBrush {
             }, 300);
         }, 3000);
     }
+
+    // 萧邦旋律自动演奏系统
+    playChopinMelodySystem() {
+        if (this.isAutoPlaying) return;
+        
+        this.isAutoPlaying = true;
+        this.currentNoteIndex = 0;
+        
+        this.showNotification('🎼 开始演奏萧邦小夜曲...');
+        this.playNextNote();
+    }
+    
+    playNextNote() {
+        if (!this.isAutoPlaying || this.currentNoteIndex >= this.chopinMelody.length) {
+            this.stopAutoPlaySystem();
+            return;
+        }
+        
+        const currentNote = this.chopinMelody[this.currentNoteIndex];
+        const duration = currentNote.duration / this.playbackSpeed;
+        
+        if (currentNote.note) {
+            // 播放音符
+            const keyElement = document.querySelector(`[data-note="${currentNote.note}"]`);
+            if (keyElement) {
+                this.playPianoNote(keyElement);
+                setTimeout(() => this.releasePianoKey(keyElement), duration * 0.8);
+            }
+        }
+        
+        // 安排下一个音符
+        this.autoPlayTimeout = setTimeout(() => {
+            this.currentNoteIndex++;
+            this.playNextNote();
+        }, duration);
+    }
+    
+    stopAutoPlaySystem() {
+        this.isAutoPlaying = false;
+        if (this.autoPlayTimeout) {
+            clearTimeout(this.autoPlayTimeout);
+            this.autoPlayTimeout = null;
+        }
+        this.currentNoteIndex = 0;
+        this.updateNowPlaying('');
+        this.showNotification('⏹️ 演奏停止');
+    }
+    
+    togglePianoModeSystem() {
+        this.isPianoMode = !this.isPianoMode;
+        const message = this.isPianoMode 
+            ? '🎹 钢琴绘画模式已开启！绘画时会触发钢琴音符' 
+            : '🎨 普通绘画模式已开启';
+        this.showNotification(message);
+        
+        // 更新画布样式
+        if (this.isPianoMode) {
+            document.body.classList.add('piano-mode');
+        } else {
+            document.body.classList.remove('piano-mode');
+        }
+    }
 }
 
 // 全局函数
@@ -626,6 +1081,25 @@ function startDrawing() {
             button.textContent = '继续创作';
         }, 2000);
     }, 500);
+}
+
+// 钢琴相关全局函数
+function playChopinMelody() {
+    if (window.magicBrush) {
+        window.magicBrush.playChopinMelodySystem();
+    }
+}
+
+function stopAutoPlay() {
+    if (window.magicBrush) {
+        window.magicBrush.stopAutoPlaySystem();
+    }
+}
+
+function togglePianoMode() {
+    if (window.magicBrush) {
+        window.magicBrush.togglePianoModeSystem();
+    }
 }
 
 function clearCanvas() {
