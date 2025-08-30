@@ -1087,18 +1087,30 @@ function startDrawing() {
 function playChopinMelody() {
     if (window.magicBrush) {
         window.magicBrush.playChopinMelodySystem();
+    } else {
+        console.warn('MagicBrush 还未初始化完成，请稍后再试');
     }
 }
 
 function stopAutoPlay() {
     if (window.magicBrush) {
         window.magicBrush.stopAutoPlaySystem();
+    } else {
+        console.warn('MagicBrush 还未初始化完成，请稍后再试');
     }
 }
 
 function togglePianoMode() {
     if (window.magicBrush) {
         window.magicBrush.togglePianoModeSystem();
+    } else {
+        console.warn('MagicBrush 还未初始化完成，请稍后再试');
+        // 延迟重试
+        setTimeout(() => {
+            if (window.magicBrush) {
+                window.magicBrush.togglePianoModeSystem();
+            }
+        }, 1000);
     }
 }
 
@@ -1263,3 +1275,16 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     document.head.appendChild(style);
 });
+
+// 确保全局函数在window对象上可用（GitHub Pages兼容性修复）
+window.togglePianoMode = togglePianoMode;
+window.playChopinMelody = playChopinMelody;
+window.stopAutoPlay = stopAutoPlay;
+window.startDrawing = startDrawing;
+window.clearCanvas = clearCanvas;
+window.toggleMute = toggleMute;
+window.testSound = testSound;
+window.saveArtwork = saveArtwork;
+window.shareArtwork = shareArtwork;
+window.downloadArtwork = downloadArtwork;
+window.startChallenge = startChallenge;
